@@ -1,0 +1,9 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  database: hdev
+  schema_search_path: public
+  pool: 5
+  host: localhost
+  username: holistics
+  password:
