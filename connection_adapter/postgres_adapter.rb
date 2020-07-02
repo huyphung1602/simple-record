@@ -17,6 +17,21 @@ class PostgresAdapter
         ORDER BY a.attnum
     SQL
 
-    @conn.exec(sql)
+    SimpleCache.fetch "#{table_name}_columns" do
+      column_name, format_type, pg_get_expr, attnotnull, atttypid, atttypmod, collname, comment = @conn.exec(sql).values
+      @conn.exec(sql).values.inject({}) do |cols, col_values|
+        column_name, format_type, pg_get_expr, attnotnull, atttypid, atttypmod, collname, comment = col_values
+        cols[column_name] = {
+          format_type: format_type,
+          pg_get_expr: pg_get_expr,
+          attnotnull: attnotnull,
+          atttypid: atttypid,
+          atttypmod: atttypmod,
+          collname: collname,
+          comment: comment,
+        }
+        cols
+      end
+    end
   end
 end
