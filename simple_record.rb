@@ -13,10 +13,42 @@ class SimpleRecord
     SQL
 
     pretty_log(sql)
-    conn.exec(sql).values.first
+
+    SimpleCache.fetch "#{table_name}_records" do
+      row = conn.exec(sql).values.first
+      hash = {}
+      column_names.each_with_index do |col_name, index|
+        hash[col_name.to_sym] = row[index]
+      end
+      {
+        "#{table_name}_#{key}": hash
+      }
+    end
+    self.new(key, table_name)
   end
 
   private
+
+  def initialize(pk_key, table_name)
+    p pk_key
+    p table_name
+    @pk_key = pk_key
+    @table_name = table_name
+  end
+
+  def method_missing(method, *args, &block)
+    if self.class.column_names.include?(method.to_s)
+      SimpleCache.fetch("#{@table_name}_records")["#{@table_name}_#{@pk_key}".to_sym][method.to_sym]
+    else
+      super
+    end
+  end
+
+  def self.parse_row(row_array)
+    row_array.each do |col|
+      column_names
+    end
+  end
 
   def self.table_name
     self.name.tableize
