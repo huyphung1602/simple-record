@@ -6,12 +6,21 @@ require './connection_adapter/postgres_connection.rb'
 class SimpleRecord
   def self.find key
     sql = <<~SQL
-      SELECT * FROM #{table_name} WHERE #{primary_key} = #{key} LIMIT 1
+      SELECT #{column_names.join(', ')}
+      FROM #{table_name}
+      WHERE #{primary_key} = #{key}
+      LIMIT 1
     SQL
+
+    pretty_log(sql)
     conn.exec(sql).values.first
   end
 
   private
+
+  def self.table_name
+    self.name.tableize
+  end
 
   def self.dbname
     ::DatabaseConfig.new('development').dbname
@@ -33,15 +42,21 @@ class SimpleRecord
     adapter.table_definitions
   end
 
-  def self.column_definitions
-    adapter.column_definitions
-  end
-
-  def self.table_name
-    self.name.tableize
+  def self.columns
+    adapter.column_definitions(table_name)
   end
 
   def self.primary_key
     table_definitions[table_name][:key_column]
+  end
+
+  def self.column_names
+    columns.keys
+  end
+
+  def self.pretty_log(input_str)
+    input_str.inspect.split('\n').each do |line|
+      p line
+    end
   end
 end
