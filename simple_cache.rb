@@ -14,4 +14,12 @@ class SimpleCache
       end
     end
   end
+
+  def self.clear(key = nil)
+    if key
+      @redis.delete(key)
+    else
+      @redis = {}
+    end
+  end
 end
