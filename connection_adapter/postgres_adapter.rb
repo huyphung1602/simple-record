@@ -35,7 +35,7 @@ class PostgresAdapter
     end
   end
 
-  def table_definitions(table_name)
+  def table_definitions
     sql = <<~SQL
       select
         kcu.table_schema,
@@ -58,13 +58,13 @@ class PostgresAdapter
 
     SimpleCache.fetch "table_definitions" do
       @conn.exec(sql).values.inject({}) do |tables, table_values|
-        table_schema, table_name, constraint_name, ordinal_position, column_name = table_values
+        table_schema, table_name, constraint_name, position, key_column = table_values
         tables[table_name] = {
           table_schema: table_schema,
           table_name: table_name,
           constraint_name: constraint_name,
-          ordinal_position: ordinal_position,
-          column_name: column_name,
+          position: position,
+          key_column: key_column,
         }
         tables
       end
