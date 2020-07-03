@@ -34,4 +34,40 @@ class PostgresAdapter
       end
     end
   end
+
+  def table_definitions(table_name)
+    sql = <<~SQL
+      select
+        kcu.table_schema,
+        kcu.table_name,
+        tco.constraint_name,
+        kcu.ordinal_position as position,
+        kcu.column_name as key_column
+      from
+        information_schema.table_constraints tco
+        join information_schema.key_column_usage kcu on kcu.constraint_name = tco.constraint_name
+        and kcu.constraint_schema = tco.constraint_schema
+        and kcu.constraint_name = tco.constraint_name
+      where
+        tco.constraint_type = 'PRIMARY KEY'
+      order by
+        kcu.table_schema,
+        kcu.table_name,
+        position;
+    SQL
+
+    SimpleCache.fetch "table_definitions" do
+      @conn.exec(sql).values.inject({}) do |tables, table_values|
+        table_schema, table_name, constraint_name, ordinal_position, column_name = table_values
+        tables[table_name] = {
+          table_schema: table_schema,
+          table_name: table_name,
+          constraint_name: constraint_name,
+          ordinal_position: ordinal_position,
+          column_name: column_name,
+        }
+        tables
+      end
+    end
+  end
 end
