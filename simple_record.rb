@@ -2,6 +2,7 @@ require 'active_support/inflector'
 require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
+require './relation/where_clause.rb'
 
 class SimpleRecord
   def self.find key
@@ -28,11 +29,7 @@ class SimpleRecord
   end
 
   def self.where(hash)
-    final_where_clause = ''
-    hash.each_with_index do |(k, v), index|
-      where_clause = index == 0 ? "WHERE #{k} = #{v}" : " AND #{k} = #{v}"
-      final_where_clause += where_clause
-    end
+    where_clause = ::WhereClause.build(table_name, hash)
 
     select_clause = "
       SELECT #{column_names.join(', ')}
@@ -41,10 +38,10 @@ class SimpleRecord
 
     sql = <<~SQL
       #{select_clause}
-      #{final_where_clause}
+      #{where_clause}
     SQL
 
-    sql
+    conn.exec(sql).values
   end
 
   private
@@ -103,7 +100,7 @@ class SimpleRecord
   end
 
   def self.column_names
-    columns.keys
+    columns.keys.map(&:to_s)
   end
 
   def self.pretty_log(input_str)

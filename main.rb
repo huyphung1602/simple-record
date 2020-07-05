@@ -2,6 +2,7 @@ class Main
   DIRECTORY_PATHS = [
     './connection_adapter/*.rb',
     './database_congfig/*.rb',
+    './relation/*.rb',
   ]
 
   FILE_PATHS = [
