@@ -1,0 +1,2 @@
+class WhereClause
+end
