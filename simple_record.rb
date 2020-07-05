@@ -27,6 +27,26 @@ class SimpleRecord
     self.new(key, table_name)
   end
 
+  def self.where(hash)
+    final_where_clause = ''
+    hash.each_with_index do |(k, v), index|
+      where_clause = index == 0 ? "WHERE #{k} = #{v}" : " AND #{k} = #{v}"
+      final_where_clause += where_clause
+    end
+
+    select_clause = "
+      SELECT #{column_names.join(', ')}
+      FROM #{table_name}
+    "
+
+    sql = <<~SQL
+      #{select_clause}
+      #{final_where_clause}
+    SQL
+
+    sql
+  end
+
   private
 
   def initialize(pk_key, table_name)
