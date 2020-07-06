@@ -94,6 +94,8 @@ class WhereClause
   def method_missing(method, *args, &block)
     if method == :where
       self.build_chain(*args)
+    elsif [:first, :last].include?(method)
+      self.evaluate.send(method)
     else
       super
     end
