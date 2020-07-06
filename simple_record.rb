@@ -2,14 +2,15 @@ require 'active_support/inflector'
 require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
-require './relation/where_clause.rb'
 require './relation/select_clause.rb'
+require './relation/where_clause.rb'
+require './relation/limit_clause.rb'
 
 class SimpleRecord
   def self.find(value)
     select_clause = ::SelectClause.build(table_name, column_names)
     where_clause = ::WhereClause.build(table_name, {primary_key.to_sym => value})
-    limit = 'LIMIT 1'
+    limit_clause = ::LimitClause.build(1)
     sql = build_sql(select_clause, where_clause, limit)
 
     pretty_log(sql)
@@ -98,11 +99,11 @@ class SimpleRecord
     end
   end
 
-  def self.build_sql(select_clause, where_clause, limit = '')
+  def self.build_sql(select_clause, where_clause, limit_clause = '')
     sql = <<~SQL
       #{select_clause}
       #{where_clause}
-      #{limit}
+      #{limit_clause}
     SQL
   end
 end
