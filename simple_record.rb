@@ -11,7 +11,7 @@ class SimpleRecord
     select_clause = ::SelectClause.build(table_name, column_names)
     where_clause = ::WhereClause.build(table_name, {primary_key.to_sym => value})
     limit_clause = ::LimitClause.build(1)
-    sql = build_sql(select_clause, where_clause, limit)
+    sql = build_sql(select_clause, where_clause, limit_clause)
 
     pretty_log(sql)
 
