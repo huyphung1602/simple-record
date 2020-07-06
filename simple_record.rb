@@ -3,15 +3,14 @@ require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
 require './relation/where_clause.rb'
+require './relation/select_clause.rb'
 
 class SimpleRecord
-  def self.find key
-    sql = <<~SQL
-      SELECT #{column_names.join(', ')}
-      FROM #{table_name}
-      WHERE #{primary_key} = #{key}
-      LIMIT 1
-    SQL
+  def self.find(value)
+    select_clause = ::SelectClause.build(table_name, column_names)
+    where_clause = ::WhereClause.build(table_name, {primary_key.to_sym => value})
+    limit = 'LIMIT 1'
+    sql = build_sql(select_clause, where_clause, limit)
 
     pretty_log(sql)
 
@@ -22,24 +21,16 @@ class SimpleRecord
         hash[col_name.to_sym] = row[index]
       end
       {
-        "#{table_name}_#{key}": hash
+        "#{table_name}_#{value}": hash
       }
     end
-    self.new(key, table_name)
+    self.new(value, table_name)
   end
 
   def self.where(hash)
     where_clause = ::WhereClause.build(table_name, hash)
-
-    select_clause = "
-      SELECT #{column_names.join(', ')}
-      FROM #{table_name}
-    "
-
-    sql = <<~SQL
-      #{select_clause}
-      #{where_clause}
-    SQL
+    select_clause = ::SelectClause.build(table_name, column_names)
+    sql = build_sql(select_clause, where_clause)
 
     conn.exec(sql).values
   end
@@ -47,8 +38,6 @@ class SimpleRecord
   private
 
   def initialize(pk_key, table_name)
-    p pk_key
-    p table_name
     @pk_key = pk_key
     @table_name = table_name
   end
@@ -107,5 +96,13 @@ class SimpleRecord
     input_str.inspect.split('\n').each do |line|
       p line
     end
+  end
+
+  def self.build_sql(select_clause, where_clause, limit = '')
+    sql = <<~SQL
+      #{select_clause}
+      #{where_clause}
+      #{limit}
+    SQL
   end
 end
