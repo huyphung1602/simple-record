@@ -28,8 +28,8 @@ class SimpleRecord
   end
 
   def self.where(hash)
-    where_clause = ::WhereClause.build(table_name, hash)
     select_clause = ::SelectClause.build(table_name, column_names)
+    where_clause = ::WhereClause.build(table_name, hash)
     sql = build_sql(select_clause, where_clause)
 
     conn.exec(sql).values
