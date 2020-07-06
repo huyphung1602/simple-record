@@ -29,10 +29,13 @@ class SimpleRecord
   end
 
   def self.where(hash)
-    select_clause = ::SelectClause.build(table_name, column_names)
-    where_clause = ::WhereClause.build(table_name, hash)
-    sql = build_sql(select_clause, where_clause)
+    get_table_columns
+    ::WhereClause.new(table_name).build(hash)
+  end
 
+  def self.evaluate_where(where_clause)
+    select_clause = ::SelectClause.build(table_name, column_names)
+    sql = build_sql(select_clause, where_clause)
     conn.exec(sql).values
   end
 
@@ -81,7 +84,7 @@ class SimpleRecord
     adapter.table_definitions
   end
 
-  def self.columns
+  def self.get_table_columns
     adapter.column_definitions(table_name)
   end
 
@@ -90,7 +93,7 @@ class SimpleRecord
   end
 
   def self.column_names
-    columns.keys.map(&:to_s)
+    get_table_columns.keys.map(&:to_s)
   end
 
   def self.pretty_log(input_str)

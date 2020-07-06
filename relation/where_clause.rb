@@ -1,23 +1,45 @@
+require 'active_support/inflector'
 require './connection_adapter/column.rb'
+require './simple_record.rb'
 
 class WhereClause
-  def self.build(table_name, columns)
-    table_columns = SimpleCache.fetch "#{table_name}_columns"
-    final_where_clause = ''
+  def initialize(table_name)
+    @table_name = table_name
+    @where_clause = ''
+  end
 
+  def build(columns)
     columns.each_with_index do |(k, v), index|
       method = "build_#{Column.get_column_type(table_columns[k][:format_type])}"
       where_or_and = index == 0 ? 'WHERE' : 'AND'
-      where_clause = "#{where_or_and} #{self.send(method, k, v)}"
-      final_where_clause += where_clause
+      this_clause = "#{where_or_and} #{self.send(method, k, v)}"
+      @where_clause += this_clause
     end
 
-    final_where_clause
+    self
+  end
+
+  def build_chain(columns)
+    columns.each_with_index do |(k, v), index|
+      method = "build_#{Column.get_column_type(table_columns[k][:format_type])}"
+      this_clause = " AND #{self.send(method, k, v)}"
+      @where_clause += this_clause
+    end
+
+    self
+  end
+
+  def evaluate
+    @table_name.classify.constantize.evaluate_where(@where_clause)
   end
 
   private
 
-  def self.build_string(key, value)
+  def table_columns
+    SimpleCache.fetch "#{@table_name}_columns"
+  end
+
+  def build_string(key, value)
     if value.is_a? Array
       return '1=0' if value.empty?
       value = value.map do |v|
@@ -30,7 +52,7 @@ class WhereClause
     end
   end
 
-  def self.build_datetime(key, value)
+  def build_datetime(key, value)
     if value.is_a? Array
       return '1=0' if value.empty?
       value = value.map do |v|
@@ -43,7 +65,7 @@ class WhereClause
     end
   end
 
-  def self.build_integer(key, value)
+  def build_integer(key, value)
     if value.is_a? Array
       return '1=0' if value.empty?
       value = value.map do |v|
@@ -56,7 +78,7 @@ class WhereClause
     end
   end
 
-  def self.build_boolean(key, value)
+  def build_boolean(key, value)
     if value.is_a? Array
       return '1=0' if value.empty?
       value = value.map do |v|
@@ -66,6 +88,14 @@ class WhereClause
       "#{key} in (#{value.join(', ')})"
     else
       "#{key} = '#{value}'"
+    end
+  end
+
+  def method_missing(method, *args, &block)
+    if method == :where
+      self.build_chain(*args)
+    else
+      super
     end
   end
 end
