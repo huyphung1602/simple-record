@@ -15,19 +15,57 @@ class WhereClause
     final_where_clause
   end
 
+  private
+
   def self.build_string(key, value)
-    "#{key} = '#{value}'"
+    if value.is_a? Array
+      return '1=0' if value.empty?
+      value = value.map do |v|
+        v.is_a?(String) ? "'#{v}'" : nil
+      end.compact
+
+      "#{key} in (#{value.join(', ')})"
+    else
+      "#{key} = '#{value}'"
+    end
   end
 
   def self.build_datetime(key, value)
-    "#{key} = '#{value}'"
+    if value.is_a? Array
+      return '1=0' if value.empty?
+      value = value.map do |v|
+        v.is_a?(String) ? "'#{v}'" : nil
+      end.compact
+
+      "#{key} in (#{value.join(', ')})"
+    else
+      "#{key} = '#{value}'"
+    end
   end
 
   def self.build_integer(key, value)
-    "#{key} = #{value}"
+    if value.is_a? Array
+      return '1=0' if value.empty?
+      value = value.map do |v|
+        v.is_a?(Integer) ? v : nil
+      end.compact
+
+      "#{key} in (#{value.join(', ')})"
+    else
+      "#{key} = '#{value}'"
+    end
   end
 
   def self.build_boolean(key, value)
-    "#{key} = #{value}"
+    if value.is_a? Array
+      return '1=0' if value.empty?
+      value = value.map do |v|
+        v.is_a?(Boolean) ? v : nil
+      end.compact
+
+      "#{key} in (#{value.join(', ')})"
+    else
+      "#{key} = '#{value}'"
+    end
   end
 end
