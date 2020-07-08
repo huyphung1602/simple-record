@@ -9,7 +9,7 @@ require './relation/limit_clause.rb'
 class SimpleRecord
   def self.find(value)
     select_clause = ::SelectClause.build(table_name, column_names)
-    where_clause = ::WhereClause.build(table_name, {primary_key.to_sym => value})
+    where_clause = ::WhereClause.new(table_name).build({primary_key.to_sym => value})
     limit_clause = ::LimitClause.build(1)
     sql = build_sql(select_clause, where_clause, limit_clause)
 
