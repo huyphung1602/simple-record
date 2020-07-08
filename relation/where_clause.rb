@@ -33,6 +33,10 @@ class WhereClause
     @table_name.classify.constantize.evaluate_where(@where_clause)
   end
 
+  def value
+    @where_clause
+  end
+
   private
 
   def table_columns
