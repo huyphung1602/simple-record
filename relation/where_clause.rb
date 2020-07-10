@@ -3,14 +3,15 @@ require './connection_adapter/column.rb'
 require './simple_record.rb'
 
 class WhereClause
-  def initialize(table_name)
+  def initialize(table_name, table_columns)
+    @table_columns = table_columns
     @table_name = table_name
     @where_clause = ''
   end
 
   def build(columns)
     columns.each_with_index do |(k, v), index|
-      method = "build_#{Column.get_column_type(table_columns[k][:format_type])}"
+      method = "build_#{Column.get_column_type(@table_columns[k][:format_type])}"
       where_or_and = index == 0 ? 'WHERE' : 'AND'
       this_clause = "#{where_or_and} #{self.send(method, k, v)}"
       @where_clause += this_clause
@@ -21,7 +22,7 @@ class WhereClause
 
   def build_chain(columns)
     columns.each_with_index do |(k, v), index|
-      method = "build_#{Column.get_column_type(table_columns[k][:format_type])}"
+      method = "build_#{Column.get_column_type(@table_columns[k][:format_type])}"
       this_clause = " AND #{self.send(method, k, v)}"
       @where_clause += this_clause
     end
@@ -38,10 +39,6 @@ class WhereClause
   end
 
   private
-
-  def table_columns
-    SimpleCache.fetch "#{@table_name}_columns"
-  end
 
   def build_string(key, value)
     if value.is_a? Array
