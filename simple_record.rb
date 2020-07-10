@@ -15,8 +15,8 @@ class SimpleRecord
 
     pretty_log(sql)
 
-    cache_record = self.get_cache_record(sql, value)
-    self.build_record_object(cache_record["#{table_name}_#{value}".to_sym])
+    cache_record = self.get_cache_record(sql)
+    self.build_record_object(cache_record.first)
   end
 
   def self.where(hash)
@@ -26,7 +26,9 @@ class SimpleRecord
   def self.evaluate_where(where_clause)
     select_clause = ::SelectClause.build(table_name, column_names)
     sql = build_sql(select_clause, where_clause)
-    conn.exec(sql).values
+
+    cache_record = self.get_cache_record(sql)
+    cache_record.map { |r| self.build_record_object(r) }
   end
 
   private
@@ -98,24 +100,18 @@ class SimpleRecord
     SQL
   end
 
-  def self.build_record_object(hash)
-    hash.each_with_object(self.new) do |(k, v), record_object|
-      record_object.instance_variable_set("@#{k}", v)
-      record_object
+  def self.build_record_object(array)
+    record_object = self.new
+    column_names.each_with_index do |col_name, index|
+      record_object.instance_variable_set("@#{col_name}", array[index])
     end
+
+    record_object
   end
 
-  def self.get_cache_record(sql, id)
-    SimpleCache.fetch "#{table_name}_records" do
-      row = conn.exec(sql).values.first
-      hash = {}
-      column_names.each_with_index do |col_name, index|
-        hash[col_name.to_sym] = row[index]
-      end
-
-      {
-        "#{table_name}_#{id}": hash
-      }
+  def self.get_cache_record(sql)
+    SimpleCache.fetch "#{sql}" do
+      conn.exec(sql).values
     end
   end
 end
