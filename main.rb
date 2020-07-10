@@ -1,5 +1,3 @@
-require 'fancy_irb'
-
 class Main
   DIRECTORY_PATHS = [
     './connection_adapter/*.rb',
@@ -15,7 +13,6 @@ class Main
   USER_DEFINE_PATH = './user_models/*.rb'
 
   def self.load_all
-    FancyIrb.start
     load_sr
     load_ud
   end

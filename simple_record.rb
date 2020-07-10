@@ -27,6 +27,8 @@ class SimpleRecord
     select_clause = ::SelectClause.build(table_name, column_names)
     sql = build_sql(select_clause, where_clause)
 
+    pretty_log(sql)
+
     cache_record = self.get_cache_record(sql)
     cache_record.map { |r| self.build_record_object(r) }
   end
