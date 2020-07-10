@@ -1,6 +1,7 @@
 require 'active_support/inflector'
 require './connection_adapter/column.rb'
 require './simple_record.rb'
+require './relation/select_clause.rb'
 
 class WhereClause
   def initialize(table_name, table_columns)
@@ -32,7 +33,8 @@ class WhereClause
 
   def evaluate(*args)
     column_names = args.map(&:to_s) if args.any?
-    @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
+    select_clause = ::SelectClause.build(@table_name, column_names)
+    @table_name.classify.constantize.evaluate_where(select_clause, @where_clause, column_names)
   end
 
   def value

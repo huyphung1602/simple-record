@@ -23,8 +23,7 @@ class SimpleRecord
     ::WhereClause.new(table_name, get_table_columns).build(hash)
   end
 
-  def self.evaluate_where(where_clause, select_column_names = nil)
-    select_clause = ::SelectClause.build(table_name, select_column_names)
+  def self.evaluate_where(select_clause, where_clause, select_column_names = nil)
     sql = build_sql(select_clause, where_clause)
 
     pretty_log(sql)
@@ -118,6 +117,14 @@ class SimpleRecord
   def self.get_cache_record(sql)
     SimpleCache.fetch "#{sql}" do
       conn.exec(sql).values
+    end
+  end
+
+  def self.has_many(association_table_name)
+    define_method(association_table_name) do
+      ::WhereClause
+        .new(association_table_name.to_s, self.class.adapter.column_definitions(association_table_name))
+        .build("#{self.class.name.foreign_key}": self.id)
     end
   end
 end
