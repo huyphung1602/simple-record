@@ -23,14 +23,18 @@ class SimpleRecord
     ::WhereClause.new(table_name, get_table_columns).build(hash)
   end
 
-  def self.evaluate_where(where_clause)
-    select_clause = ::SelectClause.build(table_name, column_names)
+  def self.evaluate_where(where_clause, select_column_names = nil)
+    select_clause = ::SelectClause.build(table_name, select_column_names)
     sql = build_sql(select_clause, where_clause)
 
     pretty_log(sql)
 
     cache_record = self.get_cache_record(sql)
-    cache_record.map { |r| self.build_record_object(r) }
+    if select_column_names.nil? 
+      cache_record.map { |r| self.build_record_object(r) }
+    else
+      select_column_names.size > 1 ? cache_record : cache_record.flatten
+    end
   end
 
   private

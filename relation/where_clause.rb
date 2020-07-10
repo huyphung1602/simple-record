@@ -30,8 +30,9 @@ class WhereClause
     self
   end
 
-  def evaluate
-    @table_name.classify.constantize.evaluate_where(@where_clause)
+  def evaluate(*args)
+    column_names = args.map(&:to_s) if args.any?
+    @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
   end
 
   def value
@@ -93,9 +94,14 @@ class WhereClause
   end
 
   def method_missing(method, *args, &block)
-    if method == :where
+    case method
+    when :where
       self.build_chain(*args)
-    elsif [:first, :last].include?(method)
+    when :all
+      self.evaluate
+    when :pluck
+      self.evaluate(*args)
+    when :first, :last
       self.evaluate.send(method)
     else
       super
