@@ -8,7 +8,7 @@ require './relation/limit_clause.rb'
 
 class SimpleRecord
   def self.find(value)
-    select_clause = ::SelectClause.build(table_name, column_names)
+    select_clause = ::SelectClause.build(table_name)
     where_clause = ::WhereClause.new(table_name).build({primary_key.to_sym => value}).value
     limit_clause = ::LimitClause.build(1)
     sql = build_sql(select_clause, where_clause, limit_clause)
@@ -34,7 +34,6 @@ class SimpleRecord
 
   def method_missing(method, *args, &block)
     if self.class.column_names.include?(method.to_s)
-      # SimpleCache.fetch("#{@table_name}_records")["#{@table_name}_#{@pk_key}".to_sym][method.to_sym]
       self.instance_variable_get("@#{method.to_s}")
     else
       super
@@ -87,9 +86,9 @@ class SimpleRecord
     input_str.inspect.split('\n').each do |line|
       line = line.gsub(/\"/, '')
       next if line.empty?
-      print line
-      print "\n"
+      print "#{line} "
     end
+    print "\n"
   end
 
   def self.build_sql(select_clause, where_clause, limit_clause = '')
