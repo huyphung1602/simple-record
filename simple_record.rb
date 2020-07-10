@@ -108,11 +108,11 @@ class SimpleRecord
 
   def self.build_record_object(array)
     record_object = self.new
-    column_names.each_with_index do |col_name, index|
-      record_object.instance_variable_set("@#{col_name}", array[index])
+    record_object.tap do |ro|
+      column_names.each_with_index do |col_name, index|
+        ro.instance_variable_set("@#{col_name}", array[index])
+      end
     end
-
-    record_object
   end
 
   def self.get_cache_record(sql)
