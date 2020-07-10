@@ -15,17 +15,8 @@ class SimpleRecord
 
     pretty_log(sql)
 
-    SimpleCache.fetch "#{table_name}_records" do
-      row = conn.exec(sql).values.first
-      hash = {}
-      column_names.each_with_index do |col_name, index|
-        hash[col_name.to_sym] = row[index]
-      end
-      {
-        "#{table_name}_#{value}": hash
-      }
-    end
-    self.new(value, table_name)
+    cache_record = self.get_cache_record(sql, value)
+    self.build_record_object(cache_record["#{table_name}_#{value}".to_sym])
   end
 
   def self.where(hash)
@@ -41,14 +32,10 @@ class SimpleRecord
 
   private
 
-  def initialize(pk_key, table_name)
-    @pk_key = pk_key
-    @table_name = table_name
-  end
-
   def method_missing(method, *args, &block)
     if self.class.column_names.include?(method.to_s)
-      SimpleCache.fetch("#{@table_name}_records")["#{@table_name}_#{@pk_key}".to_sym][method.to_sym]
+      # SimpleCache.fetch("#{@table_name}_records")["#{@table_name}_#{@pk_key}".to_sym][method.to_sym]
+      self.instance_variable_get("@#{method.to_s}")
     else
       super
     end
@@ -111,5 +98,26 @@ class SimpleRecord
       #{where_clause}
       #{limit_clause}
     SQL
+  end
+
+  def self.build_record_object(hash)
+    hash.each_with_object(self.new) do |(k, v), record_object|
+      record_object.instance_variable_set("@#{k}", v)
+      record_object
+    end
+  end
+
+  def self.get_cache_record(sql, id)
+    SimpleCache.fetch "#{table_name}_records" do
+      row = conn.exec(sql).values.first
+      hash = {}
+      column_names.each_with_index do |col_name, index|
+        hash[col_name.to_sym] = row[index]
+      end
+
+      {
+        "#{table_name}_#{id}": hash
+      }
+    end
   end
 end
