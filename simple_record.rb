@@ -13,8 +13,6 @@ class SimpleRecord
     limit_clause = ::LimitClause.build(1)
     sql = build_sql(select_clause, where_clause, limit_clause)
 
-    pretty_log(sql)
-
     cache_record = self.get_cache_record(sql)
     self.build_record_object(cache_record.first)
   end
@@ -26,8 +24,6 @@ class SimpleRecord
   def self.evaluate_where(where_clause, select_column_names = nil)
     select_clause = ::SelectClause.build(table_name, select_column_names)
     sql = build_sql(select_clause, where_clause)
-
-    pretty_log(sql)
 
     cache_record = self.get_cache_record(sql)
     if select_column_names.nil? 
@@ -117,6 +113,7 @@ class SimpleRecord
 
   def self.get_cache_record(sql)
     SimpleCache.fetch "#{sql}" do
+      pretty_log(sql)
       conn.exec(sql).values
     end
   end
