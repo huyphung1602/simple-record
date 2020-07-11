@@ -121,9 +121,11 @@ class SimpleRecord
     end
   end
 
-  def self.has_many(association_table_name)
+  def self.has_many(association_table_name, foreign_key: foreign_key, class_name: class_name)
     define_method(association_table_name) do
-      association_table_name.to_s.classify.constantize.where("#{self.class.name.foreign_key}": self.id)
+      association_class = class_name.nil? ? association_table_name.to_s.classify.constantize : class_name.to_s.constantize
+      foreign_key = foreign_key.nil? ? self.class.name.foreign_key : foreign_key.to_s
+      association_class.where("#{foreign_key}": self.id)
     end
   end
 end
