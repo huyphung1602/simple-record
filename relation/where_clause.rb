@@ -3,8 +3,8 @@ require './connection_adapter/column.rb'
 require './simple_record.rb'
 
 class WhereClause
-  def initialize(table_name, table_columns, primary_key)
-    @table_columns = table_columns
+  def initialize(table_name, col_definitions, primary_key)
+    @col_definitions = col_definitions
     @table_name = table_name
     @primary_key = primary_key
     @where_clause = ''
@@ -12,7 +12,7 @@ class WhereClause
 
   def build(columns)
     columns.each_with_index do |(k, v), index|
-      method = "build_#{Column.get_column_type(@table_columns[k][:format_type])}"
+      method = "build_#{Column.get_column_type(@col_definitions[k][:format_type])}"
       where_or_and = index == 0 ? 'WHERE' : 'AND'
       this_clause = "#{where_or_and} #{self.send(method, k, v)}"
       @where_clause += this_clause
@@ -23,7 +23,7 @@ class WhereClause
 
   def build_chain(columns)
     columns.each_with_index do |(k, v), index|
-      method = "build_#{Column.get_column_type(@table_columns[k][:format_type])}"
+      method = "build_#{Column.get_column_type(@col_definitions[k][:format_type])}"
       this_clause = " AND #{self.send(method, k, v)}"
       @where_clause += this_clause
     end
@@ -48,16 +48,17 @@ class WhereClause
     reflection = SchemaCache.fetch "#{@table_name}_reflections"
     foreign_key = reflection.reflections[association_name][:foreign_key]
     includes_query_result = association_class.where("#{foreign_key}": primary_keys).evaluate
-
-    main_query_result.each do |main_record|
-      main_record_includes_result = includes_query_result.select do |r|
-        r.send(foreign_key) == main_record.send(@primary_key)
-      end
-
-      main_record.instance_variable_set("@#{association_name}", includes_query_result)
-    end
-
+    includes_result_distribution(includes_query_result, association_class, foreign_key)
     main_query_result
+  end
+
+  def order_by(*args)
+    args.each do |col_name|
+      raise "Column #{col_name.to_s} does not exist" unless column_exist?(col_name.to_sym)
+    end
+    @where_clause += " ORDER BY #{args.map(&:to_s).join(', ')}"
+
+    self
   end
 
   private
@@ -127,6 +128,30 @@ class WhereClause
       self.evaluate.send(method)
     else
       super
+    end
+  end
+
+  def column_exist?(col_name)
+    !!@col_definitions[col_name]
+  end
+
+  def includes_result_distribution(includes_query_result, association_class, foreign_key)
+    hash = {}
+    includes_query_result.each do |r|
+      where_clause = association_class.where("#{foreign_key}": r.send(foreign_key)).where_clause
+      cache_key = association_class.get_final_sql(where_clause)
+
+      if hash[cache_key].nil?
+        hash[cache_key] = []
+      else
+        hash[cache_key] << r
+      end
+    end
+
+    hash.each do |k, v|
+      QueryCache.fetch k do
+        v
+      end
     end
   end
 end

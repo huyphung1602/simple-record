@@ -25,11 +25,18 @@ class SimpleRecord
     ::WhereClause.new(table_name, get_col_definitions, primary_key).build(hash)
   end
 
+  def self.get_final_sql(where_clause, select_column_names = nil)
+    select_clause = ::SelectClause.build(table_name, select_column_names)
+    sql = build_sql(select_clause, where_clause)
+  end
+
   def self.evaluate_where(where_clause, select_column_names = nil)
     select_clause = ::SelectClause.build(table_name, select_column_names)
     sql = build_sql(select_clause, where_clause)
 
     cache_record = self.get_cache_record(sql)
+    return cache_record if cache_record.first.is_a?(self)
+
     if select_column_names.nil? 
       cache_record.map { |r| self.build_record_object(r) }
     else
@@ -140,11 +147,12 @@ class SimpleRecord
     reflection.add_reflection(association_table_name, reflection_hash)
 
     define_method(association_table_name) do
-      if self.instance_variable_get("@#{association_table_name}").nil?
-        association_class_name.constantize.where("#{foreign_key}": self.id)
-      else
-        self.instance_variable_get("@#{association_table_name}")
-      end
+      association_class_name.constantize.where("#{foreign_key}": self.id)
+      # if self.instance_variable_get("@#{association_table_name}").nil?
+      #   association_class_name.constantize.where("#{foreign_key}": self.id)
+      # else
+      #   self.instance_variable_get("@#{association_table_name}")
+      # end
     end
   end
 end
