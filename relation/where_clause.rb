@@ -45,7 +45,17 @@ class WhereClause
     main_query_result = self.evaluate
     primary_keys = main_query_result.map { |r| r.send(@primary_key) }
     foreign_key = @table_name.classify.foreign_key
-    includes_query = association_class.where("#{foreign_key}": primary_keys)
+    includes_query_result = association_class.where("#{foreign_key}": primary_keys).evaluate
+
+    main_query_result.each do |main_record|
+      main_record_includes_result = includes_query_result.select do |r|
+        r.send(foreign_key) == main_record.send(@primary_key)
+      end
+
+      main_record.instance_variable_set("@#{association_name}", includes_query_result)
+    end
+
+    main_query_result
   end
 
   private
