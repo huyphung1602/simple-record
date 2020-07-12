@@ -45,9 +45,8 @@ class WhereClause
     main_query_result = self.evaluate
     primary_keys = main_query_result.map { |r| r.send(@primary_key) }
 
-    p SchemaCache.fetch "#{@table_name}_reflections"
-
-    foreign_key = @table_name.classify.foreign_key
+    reflection = SchemaCache.fetch "#{@table_name}_reflections"
+    foreign_key = reflection.reflections[association_name][:foreign_key]
     includes_query_result = association_class.where("#{foreign_key}": primary_keys).evaluate
 
     main_query_result.each do |main_record|

@@ -123,27 +123,25 @@ class SimpleRecord
   end
 
   def self.has_many(association_table_name, foreign_key: foreign_key, class_name: class_name)
+    association_class_name = class_name.nil? ? association_table_name.to_s.classify : class_name.to_s
+    foreign_key = foreign_key.nil? ? self.name.foreign_key : foreign_key.to_s
+
+    # New or fetch table reflection instance
     reflection = SchemaCache.fetch "#{table_name}_reflections" do
       Reflection.new(table_name)
     end
 
     reflection_hash = {
-      association_class_name: association_table_name.to_s.classify,
-      foreign_key: foreign_key.nil? ? self.class.name.foreign_key : foreign_key.to_s
+      association_class_name: association_class_name,
+      foreign_key: foreign_key,
+      association_type: :has_many,
     }
 
     reflection.add_reflection(association_table_name, reflection_hash)
 
     define_method(association_table_name) do
       if self.instance_variable_get("@#{association_table_name}").nil?
-        association_class = class_name.nil? ? association_table_name.to_s.classify.constantize : class_name.to_s.constantize
-        foreign_key = foreign_key.nil? ? self.class.name.foreign_key : foreign_key.to_s
-
-        reflection_hash = {
-          association_class_name: association_class.name,
-          foreign_key: foreign_key
-        }
-        association_class.where("#{foreign_key}": self.id)
+        association_class_name.constantize.where("#{foreign_key}": self.id)
       else
         self.instance_variable_get("@#{association_table_name}")
       end

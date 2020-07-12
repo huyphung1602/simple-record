@@ -1,4 +1,6 @@
 class Reflection
+  attr_reader :reflections
+
   def initialize(table_name)
     @table_name = table_name
     @reflections = {}
@@ -6,9 +8,5 @@ class Reflection
 
   def add_reflection(key, value)
     @reflections[key] = value
-  end
-
-  def get_reflection(key)
-    @reflections[key]
   end
 end
