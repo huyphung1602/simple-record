@@ -3,9 +3,10 @@ require './connection_adapter/column.rb'
 require './simple_record.rb'
 
 class WhereClause
-  def initialize(table_name, table_columns)
+  def initialize(table_name, table_columns, primary_key)
     @table_columns = table_columns
     @table_name = table_name
+    @primary_key = primary_key
     @where_clause = ''
   end
 
@@ -35,8 +36,16 @@ class WhereClause
     @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
   end
 
-  def value
+  def where_clause
     @where_clause
+  end
+
+  def includes(association_name)
+    association_class = association_name.to_s.classify.constantize
+    main_query_result = self.evaluate
+    primary_keys = main_query_result.map { |r| r.send(@primary_key) }
+    foreign_key = @table_name.classify.foreign_key
+    includes_query = association_class.where("#{foreign_key}": primary_keys)
   end
 
   private
@@ -71,6 +80,7 @@ class WhereClause
     if value.is_a? Array
       return '1=0' if value.empty?
       value = value.map do |v|
+        v = v.to_i if v.respond_to?('to_i')
         v.is_a?(Integer) ? v : nil
       end.compact
 
