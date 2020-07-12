@@ -3,24 +3,14 @@ class Main
     './connection_adapter/*.rb',
     './database_congfig/*.rb',
     './relation/*.rb',
-  ]
-
-  FILE_PATHS = [
-    './simple_cache.rb',
-    './simple_record.rb',
+    './*.rb'
   ]
 
   USER_DEFINE_PATH = './user_models/*.rb'
 
   def self.load_all
-    load_sr
-    load_ud
-  end
-
-  # Load lib files
-  def self.load_sr
     load_dir
-    load_file
+    load_ud
   end
 
   def self.load_ud
@@ -31,9 +21,5 @@ class Main
     DIRECTORY_PATHS.each do |dir|
       Dir[dir].each { |file| require file }
     end
-  end
-
-  def self.load_file
-    FILE_PATHS.each { |file| require file }
   end
 end

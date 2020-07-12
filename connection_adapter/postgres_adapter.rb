@@ -17,7 +17,7 @@ class PostgresAdapter
         ORDER BY a.attnum
     SQL
 
-    SimpleCache.fetch "#{table_name}_columns" do
+    SchemaCache.fetch "#{table_name}_columns" do
       column_name, format_type, pg_get_expr, attnotnull, atttypid, atttypmod, collname, comment = @conn.exec(sql).values
       @conn.exec(sql).values.inject({}) do |cols, col_values|
         column_name, format_type, pg_get_expr, attnotnull, atttypid, atttypmod, collname, comment = col_values
@@ -56,7 +56,7 @@ class PostgresAdapter
         position;
     SQL
 
-    SimpleCache.fetch "table_definitions" do
+    SchemaCache.fetch "table_definitions" do
       @conn.exec(sql).values.inject({}) do |tables, table_values|
         table_schema, table_name, constraint_name, position, key_column = table_values
         tables[table_name] = {

@@ -7,7 +7,7 @@ class DatabaseConfig
   end
 
   def get_database
-    SimpleCache.fetch 'database_config' do
+    SchemaCache.fetch 'database_config' do
       database_config_file = YAML.load_file(@path)
       database_config_file[@env_name]
     end

@@ -60,13 +60,13 @@ class SimpleRecord
   end
 
   def self.conn
-    SimpleCache.fetch 'conn' do
+    SchemaCache.fetch 'conn' do
       ::PostgresConnection.new(dbname).connection
     end
   end
 
   def self.adapter
-    SimpleCache.fetch 'adapter' do
+    SchemaCache.fetch 'adapter' do
       ::PostgresAdapter.new(conn)
     end
   end
@@ -114,7 +114,7 @@ class SimpleRecord
   end
 
   def self.get_cache_record(sql)
-    SimpleCache.fetch "#{sql}" do
+    QueryCache.fetch "#{sql}" do
       pretty_log(sql)
       conn.exec(sql).values
     end

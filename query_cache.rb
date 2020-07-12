@@ -1,4 +1,4 @@
-class SimpleCache
+class QueryCache
   @redis = {}
 
   def self.fetch key, &block
