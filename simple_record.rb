@@ -7,6 +7,8 @@ require './relation/where_clause.rb'
 require './relation/limit_clause.rb'
 
 class SimpleRecord
+  @reflections = {}
+
   def self.find(value)
     select_clause = ::SelectClause.build(table_name)
     where_clause = ::WhereClause.new(table_name, get_col_definitions, primary_key)
@@ -121,10 +123,26 @@ class SimpleRecord
   end
 
   def self.has_many(association_table_name, foreign_key: foreign_key, class_name: class_name)
+    reflection = SchemaCache.fetch "#{table_name}_reflections" do
+      Reflection.new(table_name)
+    end
+
+    reflection_hash = {
+      association_class_name: association_table_name.to_s.classify,
+      foreign_key: foreign_key.nil? ? self.class.name.foreign_key : foreign_key.to_s
+    }
+
+    reflection.add_reflection(association_table_name, reflection_hash)
+
     define_method(association_table_name) do
       if self.instance_variable_get("@#{association_table_name}").nil?
         association_class = class_name.nil? ? association_table_name.to_s.classify.constantize : class_name.to_s.constantize
         foreign_key = foreign_key.nil? ? self.class.name.foreign_key : foreign_key.to_s
+
+        reflection_hash = {
+          association_class_name: association_class.name,
+          foreign_key: foreign_key
+        }
         association_class.where("#{foreign_key}": self.id)
       else
         self.instance_variable_get("@#{association_table_name}")
