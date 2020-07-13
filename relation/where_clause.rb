@@ -8,6 +8,7 @@ class WhereClause
     @table_name = table_name
     @primary_key = primary_key
     @where_clause = ''
+    @association_cache = {}
   end
 
   def build(columns)
@@ -22,6 +23,8 @@ class WhereClause
   end
 
   def build_chain(columns)
+    @association_cache = {}
+
     columns.each_with_index do |(k, v), index|
       method = "build_#{Column.get_column_type(@col_definitions[k][:format_type])}"
       this_clause = " AND #{self.send(method, k, v)}"
@@ -33,7 +36,11 @@ class WhereClause
 
   def evaluate(*args)
     column_names = args.map(&:to_s) if args.any?
-    @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
+    if @association_cache[@table_name.to_sym]
+      @association_cache[@table_name.to_sym]
+    else
+      @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
+    end
   end
 
   def where_clause
@@ -59,6 +66,10 @@ class WhereClause
     @where_clause += " ORDER BY #{args.map(&:to_s).join(', ')}"
 
     self
+  end
+
+  def set_association_cache(association_cache)
+    @association_cache = association_cache
   end
 
   private

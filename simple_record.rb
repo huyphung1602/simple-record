@@ -111,6 +111,8 @@ class SimpleRecord
       column_names.each_with_index do |col_name, index|
         ro.instance_variable_set("@#{col_name}", array[index])
       end
+
+      ro.instance_variable_set('@association_cache', {})
     end
   end
 
@@ -139,12 +141,22 @@ class SimpleRecord
     reflection.add_reflection(association_table_name, reflection_hash)
 
     define_method(association_table_name) do
-      association_class_name.constantize.where("#{foreign_key}": self.id)
-      # if self.instance_variable_get("@#{association_table_name}").nil?
-      #   association_class_name.constantize.where("#{foreign_key}": self.id)
-      # else
-      #   self.instance_variable_get("@#{association_table_name}")
-      # end
+      association_class_name.constantize.where("#{foreign_key}": self.id).tap do |where_clause|
+        association_sql = association_class_name.constantize.get_final_sql(where_clause.where_clause)
+
+        association_query_cache = QueryCache.fetch "#{association_sql}"
+
+        association_cache = self.instance_variable_get('@association_cache')
+
+        # Store @association_query_cache
+        if association_query_cache
+          association_cache["#{association_table_name}".to_sym] = association_query_cache
+          self.instance_variable_set('@association_cache', association_cache)
+        end
+
+        # Set @association_cache
+        where_clause.set_association_cache(association_cache)
+      end
     end
   end
 end
