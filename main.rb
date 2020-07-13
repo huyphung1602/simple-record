@@ -10,6 +10,7 @@ class Main
 
   def self.load_all
     load_dir
+    ::DatabaseInitiator.new('development').execute
     load_ud
   end
 

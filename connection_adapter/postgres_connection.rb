@@ -5,7 +5,7 @@ class PostgresConnection
     @dbname = dbname
   end
 
-  def connection
-    @connection ||= PG.connect( dbname: @dbname )
+  def connect
+    PG.connect( dbname: @dbname )
   end
 end

@@ -64,20 +64,12 @@ class SimpleRecord
     self.name.tableize
   end
 
-  def self.dbname
-    ::DatabaseConfig.new('development').dbname
-  end
-
   def self.conn
-    SchemaCache.fetch 'conn' do
-      ::PostgresConnection.new(dbname).connection
-    end
+    SchemaCache.fetch 'conn'
   end
 
   def self.adapter
-    SchemaCache.fetch 'adapter' do
-      ::PostgresAdapter.new(conn)
-    end
+    SchemaCache.fetch 'adapter'
   end
 
   def self.get_table_definitions

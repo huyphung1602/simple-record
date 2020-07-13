@@ -16,4 +16,8 @@ class DatabaseConfig
   def dbname
     get_database['database']
   end
+
+  def dbtype
+    get_database['adapter']
+  end
 end
