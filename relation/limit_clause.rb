@@ -1,5 +1,5 @@
 class LimitClause
-  def self.build(limit = -1)
-    limit > -1 ? "LIMIT #{limit}" : ''
+  def initialize(limit = -1)
+    @value = limit > -1 ? "LIMIT #{limit}" : ''
   end
 end
