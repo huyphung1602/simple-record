@@ -2,12 +2,13 @@ require 'active_support/inflector'
 require './connection_adapter/column.rb'
 require './simple_record.rb'
 
-class WhereClause
+class OldWhereClause
   def initialize(table_name, col_definitions, primary_key)
     @col_definitions = col_definitions
     @table_name = table_name
     @primary_key = primary_key
     @where_clause = ''
+    @association_cache = {}
   end
 
   def build(columns)
@@ -33,8 +34,42 @@ class WhereClause
     self
   end
 
+  def evaluate(*args)
+    column_names = args.map(&:to_s) if args.any?
+    if @association_cache[@table_name.to_sym]
+      @association_cache[@table_name.to_sym]
+    else
+      @table_name.classify.constantize.evaluate_where(@where_clause, column_names)
+    end
+  end
+
   def where_clause
     @where_clause
+  end
+
+  def includes(association_name)
+    association_class = association_name.to_s.classify.constantize
+    main_query_result = self.evaluate
+    primary_keys = main_query_result.map { |r| r.send(@primary_key) }
+
+    reflection = SchemaCache.fetch "#{@table_name}_reflections"
+    foreign_key = reflection.reflections[association_name][:foreign_key]
+    includes_query_result = association_class.where("#{foreign_key}": primary_keys).evaluate
+    includes_result_distribution(includes_query_result, association_class, foreign_key)
+    main_query_result
+  end
+
+  def order_by(*args)
+    args.each do |col_name|
+      raise "Column #{col_name.to_s} does not exist" unless column_exist?(col_name.to_sym)
+    end
+    @where_clause += " ORDER BY #{args.map(&:to_s).join(', ')}"
+
+    self
+  end
+
+  def set_association_cache(association_cache)
+    @association_cache = association_cache
   end
 
   private
@@ -92,7 +127,42 @@ class WhereClause
     end
   end
 
+  def method_missing(method, *args, &block)
+    case method
+    when :where
+      self.build_chain(*args)
+    when :all
+      self.evaluate
+    when :pluck
+      self.evaluate(*args)
+    when :first, :last
+      self.evaluate.send(method)
+    else
+      super
+    end
+  end
+
   def column_exist?(col_name)
     !!@col_definitions[col_name]
+  end
+
+  def includes_result_distribution(includes_query_result, association_class, foreign_key)
+    hash = {}
+    includes_query_result.each do |r|
+      where_clause = association_class.where("#{foreign_key}": r.send(foreign_key)).where_clause
+      cache_key = association_class.get_final_sql(where_clause)
+
+      if hash[cache_key].nil?
+        hash[cache_key] = []
+      else
+        hash[cache_key] << r
+      end
+    end
+
+    hash.each do |k, v|
+      QueryCache.fetch k do
+        v
+      end
+    end
   end
 end
