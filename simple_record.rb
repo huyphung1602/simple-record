@@ -8,11 +8,32 @@ class SimpleRecord
 
   def self.find(value)
     relation = Relation.new(table_name, get_col_definitions, primary_key)
-    relation.build({primary_key.to_sym => value}, limit: 1)
+    relation.build({primary_key.to_sym => value}).limit(1)
     sql = relation.to_sql
 
     cache_record = self.get_cache_record(sql)
     self.build_record_object(cache_record.first)
+  end
+
+  def self.where(hash)
+    relation = Relation.new(table_name, get_col_definitions, primary_key)
+    relation.build(hash)
+  end
+
+  def self.all
+    relation = Relation.new(table_name, get_col_definitions, primary_key)
+    relation.build
+  end
+
+  def self.evaluate_relation(sql, select_column_names)
+    cache_record = self.get_cache_record(sql)
+    return cache_record if cache_record.first.is_a?(self)
+
+    if select_column_names.size == 0
+      cache_record.map { |r| self.build_record_object(r) }
+    else
+      select_column_names.size == 1 ? cache_record.flatten : cache_record
+    end
   end
 
   private

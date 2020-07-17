@@ -15,16 +15,22 @@ class Relation
     @limit_clause = nil
   end
 
-  def build(columns, limit: limit)
-    @select_clause = ::SelectClause.new(@table_name, @col_definitions).build(column_names)
+  def build(columns = {})
+    @select_clause = ::SelectClause.new(@table_name, @col_definitions).build
     @where_clause = ::WhereClause.new(@table_name, @col_definitions, @primary_key).build(columns)
-    @limit_clause = ::LimitClause.new(limit)
+    @limit_clause = ::LimitClause.new
 
     self
   end
 
-  def build_chain(columns)
+  def build_chain(columns = {})
     @where_clause.build_chain(columns)
+
+    self
+  end
+
+  def limit(limit_value)
+    @limit_clause.build(limit_value)
 
     self
   end
@@ -37,6 +43,17 @@ class Relation
     SQL
   end
 
+  def evaluate(*args)
+    column_names = args.map(&:to_s)
+    @select_clause.update(column_names)
+
+    if @association_cache[@table_name.to_sym]
+      @association_cache[@table_name.to_sym]
+    else
+      @table_name.classify.constantize.evaluate_relation(self.to_sql, column_names)
+    end
+  end
+
   private
 
   def column_names
@@ -47,8 +64,6 @@ class Relation
     case method
     when :where
       self.build_chain(*args)
-    when :all
-      self.evaluate
     when :pluck
       self.evaluate(*args)
     when :first, :last

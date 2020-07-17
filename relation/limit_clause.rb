@@ -1,9 +1,13 @@
 class LimitClause
-  def initialize(limit)
-    @value = limit.nil? ? '' : "LIMIT #{limit}" 
+  def initialize
+    @value = ''
   end
 
   def value
     @value
+  end
+
+  def build(limit)
+    @value = limit.nil? ? '' : "LIMIT #{limit}" 
   end
 end
