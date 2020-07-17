@@ -2,8 +2,11 @@ require 'active_support/inflector'
 require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
+require './record_builder.rb'
 
 class SimpleRecord
+  include RecordBuilder
+
   @reflections = {}
 
   def self.find(value)
@@ -87,17 +90,6 @@ class SimpleRecord
       print "#{line} "
     end
     print "\n"
-  end
-
-  def self.build_record_object(array)
-    record_object = self.new
-    record_object.tap do |ro|
-      column_names.each_with_index do |col_name, index|
-        ro.instance_variable_set("@#{col_name}", array[index])
-      end
-
-      ro.instance_variable_set('@association_cache', {})
-    end
   end
 
   def self.get_cache_record(sql)
