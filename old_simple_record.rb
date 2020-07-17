@@ -6,7 +6,7 @@ require './relation/select_clause.rb'
 require './relation/where_clause.rb'
 require './relation/limit_clause.rb'
 
-class SimpleRecord
+class OldSimpleRecord
   @reflections = {}
 
   def self.find(value)

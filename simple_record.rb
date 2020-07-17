@@ -2,46 +2,17 @@ require 'active_support/inflector'
 require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
-require './relation/select_clause.rb'
-require './relation/where_clause.rb'
-require './relation/limit_clause.rb'
 
 class SimpleRecord
   @reflections = {}
 
   def self.find(value)
-    select_clause = ::SelectClause.build(table_name)
-    where_clause = ::WhereClause.new(table_name, get_col_definitions, primary_key)
-      .build({primary_key.to_sym => value}).where_clause
-
-    limit_clause = ::LimitClause.build(1)
-    sql = build_sql(select_clause, where_clause, limit_clause)
+    relation = Relation.new(table_name, get_col_definitions, primary_key)
+    relation.build({primary_key.to_sym => value}, limit: 1)
+    sql = relation.to_sql
 
     cache_record = self.get_cache_record(sql)
     self.build_record_object(cache_record.first)
-  end
-
-  def self.where(hash)
-    ::WhereClause.new(table_name, get_col_definitions, primary_key).build(hash)
-  end
-
-  def self.get_final_sql(where_clause, select_column_names = nil)
-    select_clause = ::SelectClause.build(table_name, select_column_names)
-    sql = build_sql(select_clause, where_clause)
-  end
-
-  def self.evaluate_where(where_clause, select_column_names = nil)
-    select_clause = ::SelectClause.build(table_name, select_column_names)
-    sql = build_sql(select_clause, where_clause)
-
-    cache_record = self.get_cache_record(sql)
-    return cache_record if cache_record.first.is_a?(self)
-
-    if select_column_names.nil? 
-      cache_record.map { |r| self.build_record_object(r) }
-    else
-      select_column_names.size > 1 ? cache_record : cache_record.flatten
-    end
   end
 
   private

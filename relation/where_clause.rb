@@ -7,15 +7,14 @@ class WhereClause
     @col_definitions = col_definitions
     @table_name = table_name
     @primary_key = primary_key
-    @where_clause = ''
+    @value = ''
   end
 
   def build(columns)
     columns.each_with_index do |(k, v), index|
       method = "build_#{Column.get_column_type(@col_definitions[k][:format_type])}"
       where_or_and = index == 0 ? 'WHERE' : 'AND'
-      this_clause = "#{where_or_and} #{self.send(method, k, v)}"
-      @where_clause += this_clause
+      @value += "#{where_or_and} #{self.send(method, k, v)}"
     end
 
     self
@@ -26,15 +25,14 @@ class WhereClause
 
     columns.each_with_index do |(k, v), index|
       method = "build_#{Column.get_column_type(@col_definitions[k][:format_type])}"
-      this_clause = " AND #{self.send(method, k, v)}"
-      @where_clause += this_clause
+      @value += " AND #{self.send(method, k, v)}"
     end
 
     self
   end
 
-  def where_clause
-    @where_clause
+  def value
+    @value
   end
 
   private

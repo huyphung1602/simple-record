@@ -15,10 +15,10 @@ class Relation
     @limit_clause = nil
   end
 
-  def build(columns)
-    @select_clause = ::SelectClause.new(table_name)
-    @where_clause = ::WhereClause.new(@table_name, @col_definitions, @primary_key).build
-    @limit_clause = ::LimitClause.new
+  def build(columns, limit: limit)
+    @select_clause = ::SelectClause.new(@table_name, @col_definitions).build(column_names)
+    @where_clause = ::WhereClause.new(@table_name, @col_definitions, @primary_key).build(columns)
+    @limit_clause = ::LimitClause.new(limit)
 
     self
   end
@@ -29,14 +29,32 @@ class Relation
     self
   end
 
-  def build_sub_sql
-  end
-
   def to_sql
     sql = <<~SQL
-      #{select_clause.value}
-      #{where_clause.value}
-      #{limit_clause.value}
+      #{@select_clause.value}
+      #{@where_clause.value}
+      #{@limit_clause.value}
     SQL
+  end
+
+  private
+
+  def column_names
+    @col_definitions.keys
+  end
+
+  def method_missing(method, *args, &block)
+    case method
+    when :where
+      self.build_chain(*args)
+    when :all
+      self.evaluate
+    when :pluck
+      self.evaluate(*args)
+    when :first, :last
+      self.evaluate.send(method)
+    else
+      super
+    end
   end
 end
