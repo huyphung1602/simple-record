@@ -43,7 +43,8 @@ class SimpleRecord
 
   def method_missing(method, *args, &block)
     if self.class.column_names.include?(method.to_s)
-      self.instance_variable_get("@#{method.to_s}")
+      p self
+      self.values_before_cast[method]
     else
       super
     end
