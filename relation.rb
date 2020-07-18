@@ -54,6 +54,10 @@ class Relation
     end
   end
 
+  def set_association_cache(association_cache)
+    @association_cache = association_cache
+  end
+
   private
 
   def column_names

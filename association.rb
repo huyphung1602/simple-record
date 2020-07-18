@@ -22,7 +22,21 @@ module Association
       reflection.add_reflection(association_table_name, reflection_hash)
   
       define_method(association_table_name) do
-        association_class_name.constantize.where("#{foreign_key}": self.id)
+        association_class_name.constantize.where("#{foreign_key}": self.id).tap do |relation|
+          association_sql = relation.to_sql
+          association_query_cache = QueryCache.fetch "#{association_sql}"
+
+          association_cache = self.instance_variable_get('@association_cache')
+
+          # Store @association_query_cache
+          if association_query_cache
+            association_cache["#{association_table_name}".to_sym] = association_query_cache
+            self.instance_variable_set('@association_cache', association_cache)
+          end
+  
+          # Set @association_cache
+          relation.set_association_cache(association_cache)
+        end
         # association_class_name.constantize.where("#{foreign_key}": self.id).tap do |where_clause|
         #   association_sql = association_class_name.constantize.get_final_sql(where_clause.where_clause)
   
