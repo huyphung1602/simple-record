@@ -3,9 +3,11 @@ require './database_config/database_config.rb'
 require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
 require './record_builder.rb'
+require './association.rb'
 
 class SimpleRecord
   include RecordBuilder
+  include Association
 
   @reflections = {}
 
