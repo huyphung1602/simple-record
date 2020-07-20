@@ -3,7 +3,24 @@
 This repository is created for learning purpose. I try to re-implement these basic features of Rails ActiveRecord by myself:
 - Some basic query methods.
 - Basic associations.
+## Setup
+Config your local database type and name into `config/database.yml`
+```ruby
+development:
+  adapter: postgresql
+  database: hdev
+```
+Add your model inside the user_models folder
+```ruby
+# user_models/user.rb
+class User < SimpleRecord
+  has_many :posts
+end
 
+# user_models/post.rb
+class Post < SimpleRecord
+end
+```
 ## Basic query methods
 ### .find
 Find a record by primary key. It will return a simple record object.
