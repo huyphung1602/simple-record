@@ -12,7 +12,7 @@ class WhereClause
 
   def build(columns)
     columns.each_with_index do |(k, v), index|
-      type = columns_manipulator.get_column_type(@col_definitions[k][:format_type])
+      type = column_manipulator.get_column_type(@col_definitions[k][:format_type])
       method = "build_#{type}"
       where_or_and = index == 0 ? 'WHERE' : 'AND'
       @value += "#{where_or_and} #{self.send(method, k, v)}"
@@ -25,7 +25,7 @@ class WhereClause
     @association_cache = {}
 
     columns.each_with_index do |(k, v), index|
-      type = columns_manipulator.get_column_type(@col_definitions[k][:format_type])
+      type = column_manipulator.get_column_type(@col_definitions[k][:format_type])
       method = "build_#{type}"
       @value += " AND #{self.send(method, k, v)}"
     end
@@ -92,8 +92,8 @@ class WhereClause
     end
   end
 
-  def columns_manipulator
-    Column.new(@col_definitions)
+  def column_manipulator
+    Column.column_manipulator(@col_definitions)
   end
 
   def column_exist?(col_name)

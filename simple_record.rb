@@ -104,8 +104,8 @@ class SimpleRecord
     end
   end
 
-  def self.columns_manipulator
-    Column.new(get_col_definitions)
+  def self.column_manipulator
+    Column.column_manipulator(get_col_definitions)
   end
 
   def self.ruby_type_convert(result, column_names)
@@ -115,7 +115,7 @@ class SimpleRecord
       result.each do |row|
         value = []
         column_names.each_with_index do |column_name, index|
-          value << columns_manipulator.ruby_type_converter(row[index], column_name.to_sym)
+          value << column_manipulator.ruby_type_converter(row[index], column_name.to_sym)
         end
         values << value
       end

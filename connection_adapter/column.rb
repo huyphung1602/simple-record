@@ -1,6 +1,18 @@
 class Column
+  def self.column_manipulator(col_definition)
+    dbtype =  SchemaCache.fetch('adapter').dbtype
+    case dbtype
+    when 'postgresql'
+      PostgresManipulator.new(col_definition)
+    else
+      PostgresManipulator.new(col_definition)
+    end
+  end
+end
+
+class PostgresManipulator
   # SQL type -> Ruby type
-  POSTGRESQL_TYPES = {
+  SQL_TYPES = {
     'integer'=> 'integer',
     'boolean'=> 'boolean',
     'character varying(255)'=> 'string',
@@ -8,7 +20,7 @@ class Column
     'timestamp without time zone'=> 'datetime',
     'jsonb'=> 'jsonb',
   }
-  POSTGRESQL_TRUE = [
+  TRUE_VALUES = [
     't',
     'true',
     'y',
@@ -22,17 +34,12 @@ class Column
   end
 
   def get_column_type(type)
-    case @dbtype
-    when 'postgresql'
-      POSTGRESQL_TYPES[type]
-    else
-      POSTGRESQL_TYPES[type]
-    end
+    SQL_TYPES[type]
   end
 
   def column_name_type
     @col_definition.each_with_object({}) do |(k, v), hash|
-      hash[k] = POSTGRESQL_TYPES[v[:format_type]]
+      hash[k] = SQL_TYPES[v[:format_type]]
     end
   end
 
@@ -42,9 +49,9 @@ class Column
 
     case type
     when 'integer'
-      value.to_s
+      value.to_i
     when 'boolean'
-      POSTGRESQL_TRUE.include?(value.downcase)
+      TRUE_VALUES.include?(value.downcase)
     when 'string'
       value
     when 'datetime'
@@ -54,11 +61,5 @@ class Column
     else
       value
     end
-  end
-
-  private
-
-  def dbtype
-    SchemaCache.fetch('adapter').dbtype
   end
 end
