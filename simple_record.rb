@@ -4,6 +4,7 @@ require './connection_adapter/postgres_adapter.rb'
 require './connection_adapter/postgres_connection.rb'
 require './record_builder.rb'
 require './association.rb'
+require './connection_adapter/column.rb'
 
 class SimpleRecord
   include RecordBuilder
@@ -31,7 +32,7 @@ class SimpleRecord
   end
 
   def self.evaluate_relation(sql, select_column_names)
-    cache_record = self.get_cache_record(sql)
+    cache_record = self.get_cache_record(sql, select_column_names)
     return cache_record if cache_record.first.is_a?(self)
 
     if select_column_names.size == 0
@@ -95,10 +96,29 @@ class SimpleRecord
     print "\n"
   end
 
-  def self.get_cache_record(sql)
+  def self.get_cache_record(sql, select_column_names = [])
     QueryCache.fetch "#{sql}" do
       pretty_log(sql)
-      conn.exec(sql).values
+      values = conn.exec(sql).values
+      values = ruby_type_convert(values, select_column_names)
+    end
+  end
+
+  def self.columns_manipulator
+    Column.new(get_col_definitions)
+  end
+
+  def self.ruby_type_convert(result, column_names)
+    column_names = column_names.any? ? column_names : get_col_definitions.keys
+
+    [].tap do |values|
+      result.each do |row|
+        value = []
+        column_names.each_with_index do |column_name, index|
+          value << columns_manipulator.ruby_type_converter(row[index], column_name.to_sym)
+        end
+        values << value
+      end
     end
   end
 end

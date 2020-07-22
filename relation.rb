@@ -54,7 +54,7 @@ class Relation
   end
 
   def evaluate(*args)
-    column_names = args.map(&:to_s)
+    column_names = args
     @select_clause.update(column_names)
 
     result = if @association_cache[@table_name.to_sym]
@@ -81,10 +81,6 @@ class Relation
   end
 
   private
-
-  def column_names
-    @col_definitions.keys
-  end
 
   def method_missing(method, *args, &block)
     case method

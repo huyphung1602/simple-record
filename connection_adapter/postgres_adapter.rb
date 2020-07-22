@@ -70,4 +70,8 @@ class PostgresAdapter
       end
     end
   end
+
+  def dbtype
+    'postgresql'
+  end
 end
