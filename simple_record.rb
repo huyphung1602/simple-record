@@ -46,8 +46,7 @@ class SimpleRecord
 
   def method_missing(method, *args, &block)
     if self.class.column_names.include?(method.to_s)
-      p self
-      self.values_before_cast[method]
+      self.values_after_cast[method]
     else
       super
     end
@@ -100,7 +99,7 @@ class SimpleRecord
     QueryCache.fetch "#{sql}" do
       pretty_log(sql)
       values = conn.exec(sql).values
-      values = ruby_type_convert(values, select_column_names)
+      ruby_type_convert(values, select_column_names)
     end
   end
 
