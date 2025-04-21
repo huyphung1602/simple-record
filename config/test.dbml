@@ -193,3 +193,6 @@ Ref: "users"."id" - "user_profiles"."user_id"
 Ref:  "insurances"."id" - "cars"."insurance_id"
 
 Ref: "b"."id" - "a"."id"
+Note note_1745213388339 {
+'Hello World'
+}
