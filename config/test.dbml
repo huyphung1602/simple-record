@@ -194,5 +194,5 @@ Ref:  "insurances"."id" - "cars"."insurance_id"
 
 Ref: "b"."id" - "a"."id"
 Note note_1745213388339 {
-'Hello World'
+'Huy Dep Trai'
 }
