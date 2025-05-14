@@ -1,3 +1,4 @@
+// Huy Phung update
 Table "employees_1" {
   "employee_id" INT [not null, note: 'Unique identifier for each employee']
   "first_name" VARCHAR(50) [not null, note: '''Employee''s first name''']
